@@ -20,3 +20,4 @@ tmp/
 .vscode/
 .smoke_projects/
 .e2e_projects/
+.cursor/hooks/.auto_push.lock

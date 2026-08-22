@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "stop": [
+      {
+        "command": "python .cursor/hooks/auto_commit_push.py",
+        "timeout": 120
+      }
+    ]
+  }
+}
