@@ -1,0 +1,188 @@
+:root {
+  --bg0: #0c1218;
+  --bg1: #141c26;
+  --bg2: #1c2733;
+  --line: #2a3a4a;
+  --text: #e8eef4;
+  --muted: #8fa3b5;
+  --accent: #3db8a0;
+  --accent2: #e2a35a;
+  --danger: #e06c75;
+  --ok: #7fd99a;
+  --font-display: "Segoe UI Semibold", "Microsoft YaHei UI", sans-serif;
+  --font-body: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+  --font-mono: Consolas, "Cascadia Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #1a2a38 0%, transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, #243018 0%, transparent 50%),
+    var(--bg0);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100%;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 20px 64px;
+}
+.brand {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  letter-spacing: 0.04em;
+  margin: 0 0 4px;
+}
+.tagline {
+  color: var(--muted);
+  margin: 0 0 28px;
+  font-size: 0.95rem;
+}
+nav {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+nav a { color: var(--muted); }
+nav a:hover, nav a.active { color: var(--text); }
+
+.panel {
+  background: linear-gradient(180deg, var(--bg1), var(--bg2));
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+}
+.panel h2 {
+  margin: 0 0 14px;
+  font-size: 1.15rem;
+  font-family: var(--font-display);
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 10px 0 4px;
+}
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%;
+  background: var(--bg0);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 9px 11px;
+  font: inherit;
+}
+textarea { min-height: 90px; font-family: var(--font-mono); font-size: 0.85rem; }
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+@media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+}
+.btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--bg0);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font: inherit;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #062018;
+  font-weight: 600;
+}
+.btn.warn { border-color: var(--accent2); color: var(--accent2); }
+.btn.danger { border-color: var(--danger); color: var(--danger); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.badge.ok { color: var(--ok); border-color: var(--ok); }
+.badge.fail { color: var(--danger); border-color: var(--danger); }
+.badge.wait { color: var(--accent2); border-color: var(--accent2); }
+
+.status-line { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }
+.path {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  word-break: break-all;
+}
+.error {
+  background: #2a1518;
+  border: 1px solid var(--danger);
+  color: #ffc9ce;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+  white-space: pre-wrap;
+}
+.section-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+  background: rgba(0,0,0,0.18);
+}
+.section-card h3 { margin: 0 0 8px; font-size: 0.95rem; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.muted { color: var(--muted); }
+.busy-banner {
+  background: #2a2210;
+  border: 1px solid var(--accent2);
+  color: #ffe2a8;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+audio, video { width: 100%; margin-top: 10px; border-radius: 6px; background: #000; }
+.toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: var(--bg2);
+  border: 1px solid var(--accent);
+  padding: 12px 16px;
+  border-radius: 8px;
+  max-width: 360px;
+  display: none;
+  z-index: 50;
+}
+.toast.show { display: block; }

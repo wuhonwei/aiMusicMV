@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}MV Studio{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="/static/app.js" defer></script>
+</head>
+<body {% block body_attrs %}{% endblock %}>
+  <div class="wrap">
+    <header>
+      <h1 class="brand">MV Studio</h1>
+      <p class="tagline">本地个人音乐 MV 生成平台 · 仅绑定 127.0.0.1</p>
+      <nav>
+        <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">新建</a>
+        <a href="/settings" class="{% if request.url.path == '/settings' %}active{% endif %}">设置</a>
+        <a href="/docs">API</a>
+      </nav>
+    </header>
+    {% if queue and queue.busy %}
+    <div class="busy-banner">队列忙碌：{{ queue.current.step }}（项目 {{ queue.current.project_id }}）。请等待完成后再提交。</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </div>
+  <div id="toast" class="toast"></div>
+</body>
+</html>

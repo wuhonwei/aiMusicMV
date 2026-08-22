@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}MV Studio · 新建项目{% endblock %}
+{% block content %}
+<section class="panel">
+  <h2>新建项目</h2>
+  <form id="create-form" onsubmit="return false;">
+    <label>主题提示词 *</label>
+    <textarea id="theme" required placeholder="例：雨夜霓虹下的重逢"></textarea>
+    <div class="grid2">
+      <div>
+        <label>曲风</label>
+        <input type="text" id="genre" value="synth-pop" />
+      </div>
+      <div>
+        <label>语种</label>
+        <input type="text" id="language" value="zh" />
+      </div>
+      <div>
+        <label>情绪</label>
+        <input type="text" id="mood" value="nostalgic" />
+      </div>
+      <div>
+        <label>目标时长（秒）</label>
+        <input type="number" id="duration" value="120" min="30" max="600" />
+      </div>
+      <div>
+        <label>人声性别</label>
+        <input type="text" id="vocal_gender" value="female" />
+      </div>
+      <div>
+        <label>音色</label>
+        <input type="text" id="vocal_timbre" value="warm" />
+      </div>
+      <div>
+        <label>BPM 最小</label>
+        <input type="number" id="bpm_min" value="90" />
+      </div>
+      <div>
+        <label>BPM 最大</label>
+        <input type="number" id="bpm_max" value="110" />
+      </div>
+      <div>
+        <label>画幅</label>
+        <select id="aspect">
+          <option value="16:9" {% if default_aspect == '16:9' %}selected{% endif %}>16:9（1920×1080）</option>
+          <option value="9:16" {% if default_aspect == '9:16' %}selected{% endif %}>9:16（1080×1920）</option>
+        </select>
+      </div>
+      <div>
+        <label>字幕（烧录）</label>
+        <select id="subtitles">
+          <option value="true" {% if subtitles_default %}selected{% endif %}>开启（默认）</option>
+          <option value="false" {% if not subtitles_default %}selected{% endif %}>关闭</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="has_rap" /> 说唱</label>
+      <label><input type="checkbox" id="has_chorus" checked /> 合唱感副歌</label>
+    </div>
+    <label>风格补充</label>
+    <input type="text" id="style_notes" placeholder="可选" />
+    <div class="row">
+      <button class="btn primary" id="btn-create" onclick="createAndStart()">创建并生成词曲 JSON</button>
+      <span class="muted">当前 Mock：{{ '开' if settings.mock_mode else '关' }} · 根目录 {{ settings.resolved_projects_root() }}</span>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>最近项目</h2>
+  {% if projects %}
+  <ul class="list">
+    {% for p in projects %}
+    <li>
+      <div>
+        <a href="/projects/{{ p.project_id }}">{{ p.title or p.project_id }}</a>
+        <div class="muted">{{ p.status }} · v{{ p.version }} · {{ p.aspect }}</div>
+      </div>
+      <span class="badge">{{ p.project_id }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">暂无项目</p>
+  {% endif %}
+</section>
+
+<script>
+async function createAndStart() {
+  const btn = document.getElementById("btn-create");
+  btn.disabled = true;
+  try {
+    const body = {
+      theme: document.getElementById("theme").value.trim(),
+      genre: document.getElementById("genre").value.trim(),
+      language: document.getElementById("language").value.trim(),
+      mood: document.getElementById("mood").value.trim(),
+      duration_sec_target: parseInt(document.getElementById("duration").value, 10),
+      vocal_gender: document.getElementById("vocal_gender").value.trim(),
+      vocal_timbre: document.getElementById("vocal_timbre").value.trim(),
+      bpm_min: parseInt(document.getElementById("bpm_min").value, 10),
+      bpm_max: parseInt(document.getElementById("bpm_max").value, 10),
+      has_rap: document.getElementById("has_rap").checked,
+      has_chorus: document.getElementById("has_chorus").checked,
+      aspect: document.getElementById("aspect").value,
+      subtitles: document.getElementById("subtitles").value === "true",
+      style_notes: document.getElementById("style_notes").value.trim(),
+    };
+    if (!body.theme) throw new Error("请填写主题");
+    const meta = await api("/api/projects", { method: "POST", body: JSON.stringify(body) });
+    await api(`/api/projects/${meta.project_id}/actions/generate-lyrics`, { method: "POST" });
+    location.href = `/projects/${meta.project_id}`;
+  } catch (e) {
+    showToast(e.message || String(e), true);
+    btn.disabled = false;
+  }
+}
+</script>
+{% endblock %}

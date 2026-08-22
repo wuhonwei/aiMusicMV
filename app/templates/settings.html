@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}设置 · MV Studio{% endblock %}
+{% block content %}
+<section class="panel">
+  <h2>运行设置</h2>
+  <form onsubmit="return false;">
+    <label>项目根目录 PROJECTS_ROOT</label>
+    <input type="text" id="projects_root" value="{{ projects_root }}" />
+    <label>ComfyUI URL</label>
+    <input type="text" id="comfyui_base_url" value="{{ settings.comfyui_base_url }}" />
+    <label>Mock 模式</label>
+    <select id="mock_mode">
+      <option value="true" {% if settings.mock_mode %}selected{% endif %}>true（无 GPU/权重可跑通）</option>
+      <option value="false" {% if not settings.mock_mode %}selected{% endif %}>false（真实 ComfyUI）</option>
+    </select>
+    <label>字幕字体</label>
+    <input type="text" id="subtitle_font" value="{{ settings.subtitle_font }}" />
+    <div class="row">
+      <button class="btn primary" onclick="saveSettings(this)">保存到 config.yaml</button>
+      <button class="btn" onclick="location.reload()">刷新健康检查</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>健康检查</h2>
+  <p>ComfyUI：
+    {% if comfy.ok %}
+    <span class="badge ok">PASS</span>
+    {% else %}
+    <span class="badge fail">FAIL</span> {{ comfy.get('error', comfy) }}
+    {% endif %}
+  </p>
+  <p>DeepSeek Key：{% if settings.deepseek_api_key %}<span class="badge ok">已配置</span>{% else %}<span class="badge wait">未配置（Mock 词曲仍可用）</span>{% endif %}</p>
+  <p class="muted">也可用：<code>python scripts/check_env.py</code></p>
+</section>
+
+<script>
+async function saveSettings(btn) {
+  btn.disabled = true;
+  try {
+    await api("/api/settings", {
+      method: "POST",
+      body: JSON.stringify({
+        projects_root: document.getElementById("projects_root").value,
+        comfyui_base_url: document.getElementById("comfyui_base_url").value,
+        mock_mode: document.getElementById("mock_mode").value === "true",
+        subtitle_font: document.getElementById("subtitle_font").value,
+      }),
+    });
+    showToast("已保存");
+    location.reload();
+  } catch (e) {
+    showToast(e.message || String(e), true);
+    btn.disabled = false;
+  }
+}
+</script>
+{% endblock %}

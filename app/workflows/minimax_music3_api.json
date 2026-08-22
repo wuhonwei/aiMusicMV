@@ -1,0 +1,22 @@
+{
+  "3": {
+    "class_type": "MiniMaxMusic3Prompt",
+    "inputs": {
+      "text": "{{MUSIC_DESCRIPTION}}"
+    }
+  },
+  "4": {
+    "class_type": "MiniMaxMusic3Generate",
+    "inputs": {
+      "prompt": ["3", 0],
+      "seed": 0
+    }
+  },
+  "5": {
+    "class_type": "SaveAudio",
+    "inputs": {
+      "audio": ["4", 0],
+      "filename_prefix": "mvstudio_music"
+    }
+  }
+}

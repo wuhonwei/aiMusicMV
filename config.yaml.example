@@ -1,0 +1,39 @@
+# Optional overrides (env vars take precedence when set)
+mock_mode: true
+default_aspect: "16:9"
+subtitles_default: true
+comfyui_base_url: "http://127.0.0.1:8188"
+projects_root: ""
+local_token: ""
+
+image:
+  checkpoint: "sd_xl_base_1.0.safetensors"
+  seed: 42
+  steps: 20
+  cfg: 7.0
+  negative_suffix: "blurry, low quality, watermark, text, logo, deformed"
+
+music:
+  # Node ID mapping for Music3 workflow API JSON placeholders
+  prompt_node_id: "3"
+  prompt_input: "text"
+
+txt2img:
+  prompt_node_id: "6"
+  negative_node_id: "7"
+  checkpoint_node_id: "4"
+  seed_node_id: "3"
+  size_node_id: "5"
+
+timeline:
+  min_shot_duration_sec: 2.0
+  shots_per_section_default: 1
+
+subtitle:
+  font: "Microsoft YaHei"
+  font_size: 42
+  margin_v: 48
+
+ffmpeg:
+  path: "ffmpeg"
+  ffprobe_path: "ffprobe"

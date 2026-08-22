@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}{{ meta.title or meta.project_id }} · MV Studio{% endblock %}
+{% block body_attrs %}data-project-id="{{ meta.project_id }}"{% endblock %}
+{% block content %}
+<section class="panel">
+  <h2>{{ meta.title or "未命名项目" }}</h2>
+  <div class="row">
+    <span class="badge {% if meta.status == 'ready' %}ok{% elif meta.status == 'failed' %}fail{% elif 'await' in meta.status %}wait{% endif %}">{{ meta.status }}</span>
+    <span class="badge">画幅 {{ meta.aspect }}</span>
+    <span class="badge">字幕 {{ '开' if meta.subtitles else '关' }}</span>
+    <span class="badge">creative v{{ meta.creative_version }} / audio v{{ meta.audio_version }}</span>
+    <span class="badge">{{ 'MOCK' if meta.mock_mode else 'REAL' }}</span>
+  </div>
+  <p class="path">项目路径：{{ path }}</p>
+  <div class="row">
+    <button class="btn" onclick="runAction(this, '/api/projects/{{ meta.project_id }}/open-folder', {reload:false})">打开文件夹</button>
+    <a class="btn" href="/">返回首页</a>
+  </div>
+  {% if meta.last_error %}
+  <div class="error">失败步骤：{{ meta.last_failed_step }}
+{{ meta.last_error }}</div>
+  <div class="row">
+    <button class="btn warn" onclick="runAction(this, '/api/projects/{{ meta.project_id }}/actions/retry')">重试当前步骤</button>
+  </div>
+  {% endif %}
+</section>
+
+{% if meta.status in ['created', 'generating_lyrics'] or (meta.status == 'failed' and meta.last_failed_step in ['generating_lyrics', 'lyrics']) %}
+<section class="panel">
+  <h2>生成词曲</h2>
+  <p class="muted">正在生成或可重新触发 DeepSeek / Mock 词曲 JSON。</p>
+  <button class="btn primary" onclick="runAction(this, '/api/projects/{{ meta.project_id }}/actions/generate-lyrics')">生成 / 重试词曲</button>
+</section>
+{% endif %}
+
+{% if creative and meta.status in ['await_lyrics_review', 'await_music_review', 'ready', 'failed', 'generating_music', 'generating_images', 'assembling'] %}
+<section class="panel" id="creative-editor" data-base='{{ creative.model_dump() | tojson }}'>
+  <h2>卡点① · 词曲 / 分镜 JSON</h2>
+  <div class="grid2">
+    <div>
+      <label>标题</label>
+      <input id="c-title" type="text" value="{{ creative.title }}" />
+    </div>
+    <div>
+      <label>语种</label>
+      <input id="c-language" type="text" value="{{ creative.language }}" />
+    </div>
+  </div>
+  <label>Music3 描述（music_description）</label>
+  <textarea id="c-music-desc">{{ creative.music_description }}</textarea>
+  <label>演唱备注</label>
+  <textarea id="c-perf">{{ creative.performance_notes }}</textarea>
+  <h3 class="muted">Visual Bible</h3>
+  <div class="grid2">
+    <div><label>setting</label><input id="vb-setting" value="{{ creative.visual_bible.setting }}" /></div>
+    <div><label>palette</label><input id="vb-palette" value="{{ creative.visual_bible.palette }}" /></div>
+    <div><label>character</label><input id="vb-character" value="{{ creative.visual_bible.character }}" /></div>
+    <div><label>camera</label><input id="vb-camera" value="{{ creative.visual_bible.camera_style }}" /></div>
+  </div>
+  {% for s in creative.sections %}
+  <div class="section-card" data-section="{{ loop.index0 }}">
+    <h3>{{ s.id }} · {{ s.label }}</h3>
+    <div class="grid2">
+      <div><label>id</label><input class="s-id" value="{{ s.id }}" /></div>
+      <div>
+        <label>label</label>
+        <select class="s-label">
+          {% for lab in ['intro','verse','chorus','bridge','outro','other'] %}
+          <option value="{{ lab }}" {% if s.label == lab %}selected{% endif %}>{{ lab }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <label>歌词</label>
+    <textarea class="s-lyrics">{{ s.lyrics }}</textarea>
+    <label>visual_prompt</label>
+    <textarea class="s-visual">{{ s.visual_prompt }}</textarea>
+    <div class="grid2">
+      <div><label>negative</label><input class="s-neg" value="{{ s.negative_prompt }}" /></div>
+      <div><label>shot_count</label><input class="s-shots" type="number" min="1" max="3" value="{{ s.shot_count }}" /></div>
+    </div>
+  </div>
+  {% endfor %}
+  <div class="row">
+    <button class="btn" onclick="saveCreative(this)">保存 JSON 修改</button>
+    {% if meta.status == 'await_lyrics_review' or (meta.status == 'failed' and meta.last_failed_step in ['generating_lyrics','lyrics']) %}
+    <button class="btn primary" onclick="saveThenConfirmLyrics(this)">确认并生成音乐</button>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if meta.status in ['await_music_review', 'ready'] or (meta.status == 'failed' and meta.last_failed_step in ['generating_music','music']) %}
+<section class="panel">
+  <h2>卡点② · 成曲确认</h2>
+  {% if audio_exists %}
+  <audio controls src="/api/projects/{{ meta.project_id }}/audio?v={{ meta.audio_version }}"></audio>
+  {% else %}
+  <p class="muted">尚无音频</p>
+  {% endif %}
+  <div class="row">
+    <button class="btn warn" onclick="runAction(this, '/api/projects/{{ meta.project_id }}/actions/reroll-music')">保留词 · 重 roll 音乐</button>
+    <button class="btn" onclick="saveThenReroll(this)">改描述保存后再生成</button>
+    <button class="btn primary" onclick="runAction(this, '/api/projects/{{ meta.project_id }}/actions/confirm-music')">确认生成 MV</button>
+  </div>
+  <p class="muted">重 roll 会删除旧音频及下游（图 / 时间轴 / 成片），creative JSON 保留并递增音频版本号。</p>
+</section>
+{% endif %}
+
+{% if meta.status == 'ready' or output_exists %}
+<section class="panel">
+  <h2>成片</h2>
+  {% if output_exists %}
+  <video controls src="/api/projects/{{ meta.project_id }}/video?v={{ meta.audio_version }}"></video>
+  <div class="row">
+    <a class="btn primary" href="/api/projects/{{ meta.project_id }}/download/video">下载 MP4</a>
+    <label>字幕
+      <select id="sub-toggle" onchange="toggleSubs(this)">
+        <option value="true" {% if meta.subtitles %}selected{% endif %}>开</option>
+        <option value="false" {% if not meta.subtitles %}selected{% endif %}>关</option>
+      </select>
+    </label>
+    <button class="btn" onclick="runAction(this, '/api/projects/{{ meta.project_id }}/actions/reassemble')">按字幕开关重装成片</button>
+  </div>
+  {% else %}
+  <p class="muted">成片尚未生成</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>日志（可下载排查）</h2>
+  {% if logs %}
+  <ul class="list">
+    {% for name in logs %}
+    <li>
+      <span class="path">{{ name }}</span>
+      <a href="/api/projects/{{ meta.project_id }}/logs/{{ name }}">下载</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">暂无日志</p>
+  {% endif %}
+</section>
+
+<script>
+async function saveThenConfirmLyrics(btn) {
+  const creative = collectCreativeFromForm();
+  const pid = document.body.dataset.projectId;
+  btn.disabled = true;
+  try {
+    await api(`/api/projects/${pid}/creative`, { method: "PUT", body: JSON.stringify({ creative }) });
+    await api(`/api/projects/${pid}/actions/confirm-lyrics`, { method: "POST" });
+    location.reload();
+  } catch (e) {
+    showToast(e.message || String(e), true);
+    btn.disabled = false;
+    setTimeout(() => location.reload(), 600);
+  }
+}
+async function saveThenReroll(btn) {
+  const creative = collectCreativeFromForm();
+  const pid = document.body.dataset.projectId;
+  btn.disabled = true;
+  try {
+    await api(`/api/projects/${pid}/creative`, { method: "PUT", body: JSON.stringify({ creative }) });
+    await api(`/api/projects/${pid}/actions/reroll-music`, { method: "POST" });
+    location.reload();
+  } catch (e) {
+    showToast(e.message || String(e), true);
+    btn.disabled = false;
+    setTimeout(() => location.reload(), 600);
+  }
+}
+async function toggleSubs(sel) {
+  const pid = document.body.dataset.projectId;
+  await api(`/api/projects/${pid}/subtitles`, {
+    method: "PATCH",
+    body: JSON.stringify({ subtitles: sel.value === "true" }),
+  });
+  showToast("字幕开关已更新，可点「重装成片」");
+}
+</script>
+{% endblock %}
