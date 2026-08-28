@@ -31,6 +31,7 @@ def create_app() -> FastAPI:
         projects = store.list_projects()[:20]
         s = get_settings()
         return templates.TemplateResponse(
+            request,
             "index.html",
             {
                 "request": request,
@@ -55,6 +56,7 @@ def create_app() -> FastAPI:
         except Exception:  # noqa: BLE001
             pass
         return templates.TemplateResponse(
+            request,
             "project.html",
             {
                 "request": request,
@@ -76,6 +78,7 @@ def create_app() -> FastAPI:
 
         comfy = await ComfyUIClient(s).health()
         return templates.TemplateResponse(
+            request,
             "settings.html",
             {
                 "request": request,
